@@ -1,0 +1,53 @@
+<html>
+  <head>
+    <style>
+      body {
+        font-family: sans-serif;
+        padding: 20px;
+      }
+      #song-list {
+        margin-top: 20px;
+      }
+      button {
+        margin-top: 10px;
+        display: block;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Lo-Fi Music Player</h2>
+    <div id="song-list"></div>
+    <audio id="audio-player" style="width: 100%; margin-top: 20px;" controls></audio>
+
+    <script>
+      const songList = document.getElementById('song-list');
+      const audioPlayer = document.getElementById('audio-player');
+
+      // Request songs from the plugin
+      parent.postMessage({ pluginMessage: { type: 'get-songs' } }, '*');
+
+      // Listen for messages from the plugin
+      onmessage = (event) => {
+        const msg = event.data.pluginMessage;
+        if (msg.type === 'songs-list') {
+          msg.songs.forEach(song => {
+            const button = document.createElement('button');
+            button.textContent = `${song.name} - ${song.artist_name}`;
+            button.onclick = () => playSong(song);
+            songList.appendChild(button);
+          });
+        } else if (msg.type === 'error') {
+          console.error(msg.message);
+          songList.innerHTML = `<p>Error: ${msg.message}</p>`;
+        }
+      };
+
+      function playSong(song) {
+        audioPlayer.src = song.audio;
+        audioPlayer.play();
+        parent.postMessage({ pluginMessage: { type: 'play-song', songTitle: song.name } }, '*');
+      }
+    </script>
+  </body>
+</html>
